@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
+  </head>
+  <body>
+    <style>
+      .wrapper {
+        display: flex;
+        gap: 8px;
+      }
+
+      .column {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+    </style>
+    <div id="app"></div>
+    <button id="button">Click me</button>
+    <div class="wrapper">
+      <div class="column" id="statuses">
+          <span>statuses:</span>
+      </div>      
+      <div class="column" id="actions">
+        <span>actions:</span>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
