@@ -148,11 +148,36 @@ class ExitHandler extends Handler {
     }
 }
 
+class GlobalValue extends EventTarget {
+    #value: number;
+
+    get value() {
+        return this.#value;
+    }
+
+    set value(value: number) {
+        this.#value = value;
+
+        const event = new CustomEvent('value', {
+            detail: value,
+        });
+        this.dispatchEvent(event);
+    }
+
+    constructor(initial: number) {
+        super();
+
+        this.#value = initial;
+    }
+}
+
+const globalVolume = new GlobalValue(1);
+
 class VolumeHandler extends Handler {
     protected delta: number;
 
     public handle(): void {
-        
+        globalVolume.value += this.delta;
     }
 
     constructor(delta: number) {
@@ -247,7 +272,7 @@ const debouncedHandler = debounce((details: MediaSessionActionDetails) => {
     const body = getNotificationBody();
     const title = getNotificationTitle(handler?.title ?? 'no handler');
 
-    createNotification(title, body, notificationId);       
+    createNotification(title, body, notificationId);
 }, actionsDelay);
 
 const playOrPauseHandler = (details: MediaSessionActionDetails) => {
@@ -350,3 +375,44 @@ function changePlaybackState(
 }
 
 requestNotificationPermission();
+
+const Audio = window.Audio;
+const overrideAudio = function (this: HTMLAudioElement, src?: string) {
+    const audio = new Audio(src);
+    Object.setPrototypeOf(this, audio);
+
+    let rawVolume = audio.volume;
+
+    function valueBetween(volume: number, min = 0, max = 1) {
+        return Math.max(min, Math.min(max, volume));
+    }
+
+    // TODO: add cleanup
+    // TODO: notify when audio.volume > 1
+    globalVolume.addEventListener('value', (event) => {
+        const { detail: value } = event as CustomEvent<number>;
+
+
+        audio.volume = valueBetween(rawVolume * value);
+    });
+
+    defineProperty(this, 'volume', {
+        set(volume: number) {
+            rawVolume = volume;
+            audio.volume = valueBetween(rawVolume * globalVolume.value);
+        },
+        get() {
+            return rawVolume;
+        },
+    });
+
+    return audio;
+}
+
+defineProperty(overrideAudio, 'name', {
+    value: 'Audio',
+});
+
+defineProperty(window, 'Audio', {
+    value: overrideAudio,
+});
