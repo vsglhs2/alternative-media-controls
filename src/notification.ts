@@ -1,3 +1,10 @@
+export async function requestNotificationPermission() {
+	const permission = await Notification.requestPermission();
+	if (permission === 'granted') return;
+
+	throw new Error('Notification permission is not granted');
+}
+
 const notifications: Notification[] = [];
 
 export async function createNotification(title: string, body?: string, id?: string) {

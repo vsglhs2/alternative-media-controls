@@ -1,4 +1,4 @@
-import { createNotification, updateNotification } from "./notification";
+import { createNotification, requestNotificationPermission, updateNotification } from "./notification";
 
 const config = {
     delay: 700,
@@ -348,3 +348,5 @@ function changePlaybackState(
         updateNotification(notificationId, playbackState, undefined);
     }
 }
+
+requestNotificationPermission();

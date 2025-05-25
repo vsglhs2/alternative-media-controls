@@ -1,4 +1,5 @@
 import './emulator';
+import { requestNotificationPermission } from './notification';
 
 const AUDIO_URL = 'https://cdn.creazilla.com/sounds/15511112/mozart-concerto-no-18-in-g-flat-i-allegro-vivace-sound.mp3';
 const AUDIO_METADATA: MediaMetadataInit = {
@@ -73,13 +74,6 @@ async function createPlayer(src: string, metadata?: MediaMetadataInit) {
 }
 
 let initialized = false;
-
-async function requestNotificationPermission() {
-	const permission = await Notification.requestPermission();
-	if (permission === 'granted') return;
-
-	throw new Error('Notification permission is not granted');
-}
 
 let player: HTMLAudioElement;
 async function tryToInitialize() {
