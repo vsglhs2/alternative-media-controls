@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "tsc && vite build && node post-build.js"
   },
   "devDependencies": {
+    "@types/node": "^22.15.21",
     "typescript": "~5.8.3",
     "vite": "^6.3.5"
   }

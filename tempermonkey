@@ -1,0 +1,10 @@
+// ==UserScript==
+// @name         Alternative-Media-Controls
+// @namespace    http://tampermonkey.net/
+// @version      2025-05-25
+// @description  Android firefox alternative media session controls
+// @author       vsglhs
+// @match        https://*/*
+// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// @grant        none
+// ==/UserScript==

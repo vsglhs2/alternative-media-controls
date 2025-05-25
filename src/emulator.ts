@@ -34,6 +34,8 @@ function debounce<Callback extends (...args: any[]) => unknown>(
 
     return function (...args: Parameters<Callback>) {
         clearTimeout(timer);
+        // @ts-expect-error TODO: related to @types/node
+        // need to find a way to exclude src directory from it
         timer = setTimeout(callback, delay, ...args);
     };
 }
