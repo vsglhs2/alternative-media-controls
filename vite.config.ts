@@ -20,7 +20,7 @@ export default defineConfig({
                     entryFileNames: '[name].min.js', 
                 },
                 {
-                    sourcemap: 'inline',
+                    sourcemap: true,
                     entryFileNames: '[name].js', 
                 },
             ]
