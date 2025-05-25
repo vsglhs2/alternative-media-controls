@@ -2,7 +2,7 @@
 
 ## Motivation
 
-Android firefox do not expose all media session controls. Only play and pause buttons are available to user along with title, artist and artwork metadata. But somehow, I do not have metadata on my phone at all (both Firefox and Firefox Nightly). So I though about possible workaround and came along with this solution
+Android firefox do not expose all media session controls. Only play and pause buttons are available to user along with title, artist and artwork metadata. So I though about possible workaround and came along with this solution
 
 ## Possible actions and limitations that can be used for implementation
 
@@ -15,9 +15,18 @@ List of actions that are available without direct interaction with webpage:
 2. Media session controls:
     - play
     - pause
-    - stop
+    - stop (do not work in android firefox)
 
 Only pause and play actions are available without screen unlock
+
+## Current implementation
+
+per tap:
+1. play or pause
+2. nexttrack
+3. previoustrack
+4. seekforward
+5. seekbackward
 
 ## Need to implement
 - dragable seek (?)
@@ -26,6 +35,11 @@ Only pause and play actions are available without screen unlock
 - restart video (?)
 - chapter information
 - metadata information
+- volume regulation (override audio element?)
+- seek widget (?)
+- in locked mode show only one notification, otherwise, as much, as need (?)
+- use chapters for showing previous and next track (?)
+- maybe use silent audio to force showing pause button on firefox android (?)
 
 # Possible ways to organize interactions
 1. Play/pause sequencing (short + long presses)

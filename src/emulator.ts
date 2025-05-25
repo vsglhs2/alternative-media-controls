@@ -1,3 +1,5 @@
+import { createNotification } from "./notification";
+
 const descriptors = Object.getOwnPropertyDescriptors(MediaSession.prototype);
 const copiedPrototype = Object.defineProperties({}, descriptors) as MediaSession;
 
@@ -24,20 +26,106 @@ function debounce<Callback extends (...args: any[]) => unknown>(
     delay: number
 ) {
     let timer: ReturnType<typeof setTimeout>;
-    
-    return function(...args: Parameters<Callback>) {
+
+    return function (...args: Parameters<Callback>) {
         clearTimeout(timer);
         timer = setTimeout(callback, delay, ...args);
     };
 }
 
 type ActionItem = {
-    time: number;
+    delta: number;
     details: MediaSessionActionDetails;
 };
-const actionStack: ActionItem[] = [];
 
+const sequence: ActionItem[] = [];
 const actionsDelay = 700;
+
+let time = 0;
+
+const actionCallbackMap: Partial<Record<
+    MediaSessionAction,
+    MediaSessionActionHandler
+>> = {};
+
+const playOrPauseMarker = Symbol('Play or pause');
+
+const emulatedActions: (MediaSessionAction | typeof playOrPauseMarker)[] = [
+    playOrPauseMarker,
+    'nexttrack',
+    'previoustrack',
+    'seekforward',
+    'seekbackward',
+];
+
+const actionSequence: (MediaSessionAction | typeof playOrPauseMarker)[] = [
+    playOrPauseMarker,
+    'nexttrack',
+    'previoustrack',
+    'seekforward',
+    'seekbackward',
+];
+
+const debouncedHandler = debounce((details: MediaSessionActionDetails) => {
+    const action = actionSequence[sequence.length - 1];
+    if (emulatedActions.includes(action)) {
+        const {
+            action: finalAction,
+            handler
+        } = action == playOrPauseMarker ? {
+            action: details.action,
+            handler: actionCallbackMap[details.action]
+        } : {
+                action: action,
+                handler: actionCallbackMap[action],
+            };
+
+        handler?.({ action: finalAction });
+        createNotification(session.playbackState, finalAction, '1');
+    } else {
+        createNotification(session.playbackState, 'there is no such action', '1');
+    }
+
+    const initialAction = sequence[0].details.action
+    const nextState = initialAction === 'pause' ? 'paused' : 'playing';
+
+    sequence.length = 0;    
+    if (sequence.length !== 1) return;
+    
+    changePlaybackState(nextState, true);
+}, actionsDelay);
+
+const playOrPauseHandler = (details: MediaSessionActionDetails) => {
+    const currentTime = Date.now();
+    if (!sequence.length) {
+        time = currentTime;
+    }
+
+    sequence.push({
+        details: details,
+        delta: currentTime - time,
+    });
+    time = currentTime;
+
+    debouncedHandler(details);
+
+    if (details.action === 'pause') {
+        changePlaybackState('playing');
+    } else {
+        changePlaybackState('paused');
+    }
+}
+
+session.setActionHandler('pause', playOrPauseHandler);
+session.setActionHandler('play', playOrPauseHandler);
+
+function isActionEmulated(action: MediaSessionAction) {
+    return (
+        emulatedActions.includes(action) ||
+        action === 'pause' ||
+        action === 'play'
+    );
+}
 
 defineProperty(overridePrototype, 'setActionHandler', {
     value: function (
@@ -45,30 +133,16 @@ defineProperty(overridePrototype, 'setActionHandler', {
         action: MediaSessionAction,
         handler: MediaSessionActionHandler | null
     ): void {
-        let finalHandler = handler;
-        if (handler && (action === 'pause' || action === 'play')) {
-            const debounced = debounce((details: MediaSessionActionDetails) => {
-                handler(details);
-
-                for (let index = 0; index < actionStack.length - 1; index++) {
-                    actionStack[index].time = actionStack[index + 1].time - actionStack[index].time;
-                }
-                actionStack[actionStack.length - 1].time = 0;
-
-                console.log(...actionStack);    
-                actionStack.length = 0;
-            }, actionsDelay);
-
-            finalHandler = (details) => {
-                actionStack.push({
-                    details: details,
-                    time: Date.now(),
-                });
-                debounced(details);
-            }
+        if (!isActionEmulated(action)) {
+            return copiedPrototype.setActionHandler.call(session, action, handler);
         }
 
-        return copiedPrototype.setActionHandler.call(session, action, finalHandler);
+        if (!handler) {
+            delete actionCallbackMap[action];
+            return;
+        }
+
+        actionCallbackMap[action] = handler;
     },
 });
 
@@ -86,6 +160,7 @@ defineProperty(overridePrototype, 'metadata', {
         return session.metadata;
     },
     set: (metadata: MediaMetadata | null) => {
+        console.log('Set metadata:', metadata);
         session.metadata = metadata;
     },
 });
@@ -95,7 +170,7 @@ defineProperty(overridePrototype, 'playbackState', {
         return session.playbackState;
     },
     set: (playbackState: MediaSessionPlaybackState) => {
-        session.playbackState = playbackState;
+        changePlaybackState(playbackState, true);
     },
 });
 
@@ -109,3 +184,15 @@ defineProperty(navigator, 'mediaSession', {
 defineProperty(self, 'MediaSession', {
     value: overrideFunction,
 });
+
+function changePlaybackState(
+    playbackState: MediaSessionPlaybackState,
+    updateWidget = false
+) {
+    session.playbackState = playbackState;
+    console.log('MediaSession playbackState:', playbackState);
+
+    if (updateWidget) {
+        createNotification(playbackState, undefined, '1');
+    }
+}

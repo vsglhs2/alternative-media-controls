@@ -13,16 +13,7 @@ const AUDIO_METADATA: MediaMetadataInit = {
 	],
 };
 
-const button = document.querySelector('#button') as HTMLButtonElement;
-const statuses = document.querySelector('#statuses') as HTMLDivElement;
 const actions = document.querySelector('#actions') as HTMLDivElement;
-
-function pushStatus(label: string) {
-	const status = document.createElement('span');
-	status.textContent = label;
-
-	statuses.append(status);
-}
 
 function pushAction(label: string) {
 	const status = document.createElement('span');
@@ -38,52 +29,47 @@ async function createPlayer(src: string, metadata?: MediaMetadataInit) {
 
 	navigator.mediaSession.metadata = new MediaMetadata(metadata);
 
-	navigator.mediaSession.setActionHandler("play", () => {
-		pushAction('play');
+	function handleAction(details: MediaSessionActionDetails) {
+		console.log('MediaSession action:', details);
+		pushAction(details.action);
+	}
 
-		audio.play();
-		navigator.mediaSession.playbackState = 'playing';
-	});
-
-	navigator.mediaSession.setActionHandler("pause", () => {
-		pushAction('pause');
-
+	function handlePause() {
 		audio.pause();
-		navigator.mediaSession.playbackState = 'paused';
+		navigator.mediaSession.playbackState = 'paused';		
+	}
+
+	function handlePlay() {
+		audio.play();
+		navigator.mediaSession.playbackState = 'playing';		
+	}
+
+	navigator.mediaSession.setActionHandler("play", (details) => {	
+		handleAction(details);
+		handlePlay();
 	});
+
+	navigator.mediaSession.setActionHandler("pause", (details) => {
+		handleAction(details);
+		handlePause();
+	});
+
+	audio.addEventListener('pause', handlePause);
+	audio.addEventListener('play', handlePlay);
+
+	navigator.mediaSession.setActionHandler('nexttrack', handleAction);
+	navigator.mediaSession.setActionHandler('previoustrack', handleAction);
+	navigator.mediaSession.setActionHandler('seekbackward', handleAction);
+	navigator.mediaSession.setActionHandler('seekforward', handleAction);
+	navigator.mediaSession.setActionHandler('seekto', handleAction);
+	navigator.mediaSession.setActionHandler('skipad', handleAction);
+	navigator.mediaSession.setActionHandler('stop', handleAction);
+
 
 	navigator.mediaSession.setPositionState({})
 	navigator.mediaSession.playbackState = 'paused';
 
 	return audio;
-}
-
-async function createNotification() {
-	const nf = new Notification('title1', {
-		body: 'some notification body',
-		tag: '1',
-		silent: true,
-	});
-
-	nf.addEventListener('click', (event) => {
-		event.preventDefault();
-
-		pushStatus('click');
-	});
-
-	nf.addEventListener('close', () => {
-		pushStatus('close');
-	});
-
-	nf.addEventListener('show', () => {
-		pushStatus('show');
-	});
-
-	nf.addEventListener('error', () => {
-		pushStatus('error');
-	});
-
-	return nf;
 }
 
 let initialized = false;
@@ -110,12 +96,4 @@ async function tryToInitialize() {
 
 window.addEventListener('pointerup', () => {
 	tryToInitialize();
-});
-
-button.addEventListener('click', () => {
-	if (!initialized) return;
-
-	createNotification().then(notification => {
-
-	});
 });
