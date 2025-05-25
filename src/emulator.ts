@@ -1,5 +1,10 @@
 import { createNotification, updateNotification } from "./notification";
 
+const config = {
+    delay: 700,
+    volumeDelta: 0.01,
+};
+
 const descriptors = Object.getOwnPropertyDescriptors(MediaSession.prototype);
 const copiedPrototype = Object.defineProperties({}, descriptors) as MediaSession;
 
@@ -33,18 +38,6 @@ function debounce<Callback extends (...args: any[]) => unknown>(
     };
 }
 
-type ActionSequenceItem = {
-    delta: number;
-    details: MediaSessionActionDetails;
-};
-
-type ActionSequence = ActionSequenceItem[];
-
-const actionSequence: ActionSequence = [];
-const actionsDelay = 700;
-
-let time = 0;
-
 const actionHandleCallbackMap: Partial<
     Record<
         MediaSessionAction,
@@ -75,7 +68,9 @@ class MediaSessionHandler extends Handler {
     }
 
     public handle(
+        // @ts-ignore
         current: MediaSessionActionDetails,
+        // @ts-ignore
         sequence: ActionSequenceItem[]
     ): void {
         const handler = actionHandleCallbackMap[this.action];
@@ -151,6 +146,26 @@ class ExitHandler extends Handler {
     }
 }
 
+class VolumeHandler extends Handler {
+    protected delta: number;
+
+    public handle(): void {
+        
+    }
+
+    constructor(delta: number) {
+        super(`volume ${delta}`);
+
+        this.delta = delta;
+    }
+}
+
+// class NotifyHandler extends Handler {
+//     public handle(): void {
+//         // turn on/off notification
+//     }
+// }
+
 const emulatedActions: MediaSessionAction[] = [
     'pause',
     'play',
@@ -174,6 +189,10 @@ const mainSequence = [
     ),
     new GroupHandler(
         { title: 'volume' },
+        new VolumeHandler(config.volumeDelta),
+        new VolumeHandler(-config.volumeDelta),
+        new VolumeHandler(config.volumeDelta * 3),
+        new VolumeHandler(-config.volumeDelta * 3),
     ),
 ];
 
@@ -193,6 +212,19 @@ function getNotificationTitle(handler: string) {
 }
 
 const notificationId = 'notification-1';
+
+type ActionSequenceItem = {
+    delta: number;
+    details: MediaSessionActionDetails;
+};
+
+type ActionSequence = ActionSequenceItem[];
+
+const actionSequence: ActionSequence = [];
+const actionsDelay = config.delay;
+
+let time = 0;
+
 
 const debouncedHandler = debounce((details: MediaSessionActionDetails) => {
     const sequence = sequenceStack[0];

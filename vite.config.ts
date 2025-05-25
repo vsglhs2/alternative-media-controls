@@ -7,4 +7,14 @@ export default defineConfig({
             'Service-Worker-Allowed': '/',
         },  
     },
+    build: {
+        rollupOptions: {
+            input: {
+                'alternative-media-controls': '/src/emulator.ts',
+            },
+            output: {
+                entryFileNames: '[name].js', 
+            }
+        },
+    },
 });

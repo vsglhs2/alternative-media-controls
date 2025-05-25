@@ -2,7 +2,7 @@
 
 ## Motivation
 
-Android firefox do not expose all media session controls. Only play and pause buttons are available to user along with title, artist and artwork metadata. So I though about possible workaround and came along with this solution
+Android firefox do not expose all media session controls. Only play and pause buttons are available to user alongside with title, artist and artwork information. So I thought about possible approaches and came along with this workaround. 
 
 ## Possible actions and limitations that can be used for implementation
 
