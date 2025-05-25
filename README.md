@@ -49,6 +49,7 @@ per tap (count):
 - in locked mode show only one notification, otherwise, as much, as need (?)
 - use chapters for showing previous and next track (?)
 - maybe use silent audio to force showing pause button on firefox android (?)
+- a way to programmatically customize controls behavior
 
 # Possible ways to organize interactions
 1. Play/pause sequencing (short + long presses)

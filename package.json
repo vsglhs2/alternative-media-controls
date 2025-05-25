@@ -8,6 +8,7 @@
     "build": "tsc && vite build && node post-build.js"
   },
   "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^22.15.21",
     "typescript": "~5.8.3",
     "vite": "^6.3.5"

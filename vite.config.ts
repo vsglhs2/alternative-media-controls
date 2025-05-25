@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import terser from '@rollup/plugin-terser';
 
 export default defineConfig({
     server: {
@@ -8,13 +9,21 @@ export default defineConfig({
         },  
     },
     build: {
+        minify: false,
         rollupOptions: {
             input: {
-                'alternative-media-controls': '/src/emulator.ts',
+                'controls': '/src/emulator.ts',
             },
-            output: {
-                entryFileNames: '[name].js', 
-            }
+            output: [
+                {
+                    plugins: [terser()],
+                    entryFileNames: '[name].min.js', 
+                },
+                {
+                    sourcemap: 'inline',
+                    entryFileNames: '[name].js', 
+                },
+            ]
         },
     },
 });
