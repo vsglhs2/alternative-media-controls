@@ -21,12 +21,21 @@ Only pause and play actions are available without screen unlock
 
 ## Current implementation
 
-per tap:
+per tap (count):
 1. play or pause
-2. nexttrack
-3. previoustrack
-4. seekforward
-5. seekbackward
+2. track:
+    1. nexttrack
+    2. previoustrack
+    3. exit
+3. seek
+    1. seekforward
+    2. seekbackward
+    3. exit
+4. volume
+    1. volumeup
+    2. volumedown
+    3. exit
+
 
 ## Need to implement
 - dragable seek (?)

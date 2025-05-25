@@ -1,4 +1,4 @@
-import { createNotification } from "./notification";
+import { createNotification, updateNotification } from "./notification";
 
 const descriptors = Object.getOwnPropertyDescriptors(MediaSession.prototype);
 const copiedPrototype = Object.defineProperties({}, descriptors) as MediaSession;
@@ -33,75 +33,196 @@ function debounce<Callback extends (...args: any[]) => unknown>(
     };
 }
 
-type ActionItem = {
+type ActionSequenceItem = {
     delta: number;
     details: MediaSessionActionDetails;
 };
 
-const sequence: ActionItem[] = [];
+type ActionSequence = ActionSequenceItem[];
+
+const actionSequence: ActionSequence = [];
 const actionsDelay = 700;
 
 let time = 0;
 
-const actionCallbackMap: Partial<Record<
-    MediaSessionAction,
-    MediaSessionActionHandler
->> = {};
+const actionHandleCallbackMap: Partial<
+    Record<
+        MediaSessionAction,
+        MediaSessionActionHandler
+    >
+> = {};
 
-const playOrPauseMarker = Symbol('Play or pause');
+abstract class Handler {
+    public title: string;
 
-const emulatedActions: (MediaSessionAction | typeof playOrPauseMarker)[] = [
-    playOrPauseMarker,
-    'nexttrack',
-    'previoustrack',
-    'seekforward',
-    'seekbackward',
-];
-
-const actionSequence: (MediaSessionAction | typeof playOrPauseMarker)[] = [
-    playOrPauseMarker,
-    'nexttrack',
-    'previoustrack',
-    'seekforward',
-    'seekbackward',
-];
-
-const debouncedHandler = debounce((details: MediaSessionActionDetails) => {
-    const action = actionSequence[sequence.length - 1];
-    if (emulatedActions.includes(action)) {
-        const {
-            action: finalAction,
-            handler
-        } = action == playOrPauseMarker ? {
-            action: details.action,
-            handler: actionCallbackMap[details.action]
-        } : {
-                action: action,
-                handler: actionCallbackMap[action],
-            };
-
-        handler?.({ action: finalAction });
-        createNotification(session.playbackState, finalAction, '1');
-    } else {
-        createNotification(session.playbackState, 'there is no such action', '1');
+    constructor(title: string) {
+        this.title = title;
     }
 
-    const initialAction = sequence[0].details.action
-    const nextState = initialAction === 'pause' ? 'paused' : 'playing';
+    public abstract handle(
+        current: MediaSessionActionDetails,
+        sequence: ActionSequenceItem[],
+    ): void;
+}
 
-    sequence.length = 0;    
-    if (sequence.length !== 1) return;
-    
-    changePlaybackState(nextState, true);
+class MediaSessionHandler extends Handler {
+    protected action: MediaSessionAction;
+
+    constructor(action: MediaSessionAction) {
+        super(action);
+
+        this.action = action;
+    }
+
+    public handle(
+        current: MediaSessionActionDetails,
+        sequence: ActionSequenceItem[]
+    ): void {
+        const handler = actionHandleCallbackMap[this.action];
+
+        handler?.({ action: this.action });
+    }
+}
+
+class PlayOrPauseHandler extends MediaSessionHandler {
+    constructor() {
+        super('pause');
+    }
+
+    public handle(
+        current: MediaSessionActionDetails,
+        sequence: ActionSequenceItem[]
+    ): void {
+        this.action = current.action;
+        this.title = this.action;
+
+        super.handle(current, sequence);
+    }
+}
+
+type ExitPosition = 'begin' | 'end';
+
+type GroupHandlerOptions = {
+    title: string;
+    exitPosition: ExitPosition;
+};
+
+type HandlerSequence = Handler[];
+
+const sequenceStack: HandlerSequence[] = [];
+
+class GroupHandler extends Handler {
+    protected handlers: HandlerSequence;
+
+    public handle(): void {
+        sequenceStack.unshift(this.handlers);
+    }
+
+    constructor(
+        options: Partial<GroupHandlerOptions>,
+        ...handlers: Handler[]
+    ) {
+        let title = 'group';
+        if (options.title) {
+            title += ` ${options.title}`;
+        }
+
+        super(title);
+        this.handlers = handlers ?? [];
+
+        const exitPosition = options.exitPosition ?? 'end';
+        const exitHandler = new ExitHandler();
+
+        if (exitPosition === 'end') {
+            this.handlers.push(exitHandler);
+        } else {
+            this.handlers.unshift(exitHandler);
+        }
+    }
+}
+
+class ExitHandler extends Handler {
+    constructor() {
+        super('exit');
+    }
+
+    public handle(): void {
+        sequenceStack.shift();
+    }
+}
+
+const emulatedActions: MediaSessionAction[] = [
+    'pause',
+    'play',
+    'nexttrack',
+    'previoustrack',
+    'seekforward',
+    'seekbackward',
+];
+
+const mainSequence = [
+    new PlayOrPauseHandler(),
+    new GroupHandler(
+        { title: 'track' },
+        new MediaSessionHandler('nexttrack'),
+        new MediaSessionHandler('previoustrack'),
+    ),
+    new GroupHandler(
+        { title: 'seek' },
+        new MediaSessionHandler('seekforward'),
+        new MediaSessionHandler('seekbackward'),
+    ),
+    new GroupHandler(
+        { title: 'volume' },
+    ),
+];
+
+sequenceStack.unshift(mainSequence);
+
+function getNotificationBody() {
+    const sequence = sequenceStack[0];
+    const postfix = sequence
+        .map((h, i) => `${i + 1} - ${h.title}`)
+        .join(', ');
+
+    return `${postfix}`
+}
+
+function getNotificationTitle(handler: string) {
+    return `${session.playbackState}: (${handler})`;
+}
+
+const notificationId = 'notification-1';
+
+const debouncedHandler = debounce((details: MediaSessionActionDetails) => {
+    const sequence = sequenceStack[0];
+    const handler = sequence[actionSequence.length - 1];
+
+    if (handler) {
+        handler.handle(details, actionSequence);
+    }
+
+    if (handler instanceof PlayOrPauseHandler) {
+        const initialAction = actionSequence[0].details.action
+        const nextState = initialAction === 'pause' ? 'paused' : 'playing';
+        changePlaybackState(nextState);
+    }
+
+    actionSequence.length = 0;
+
+    const body = getNotificationBody();
+    const title = getNotificationTitle(handler?.title ?? 'no handler');
+
+    createNotification(title, body, notificationId);       
 }, actionsDelay);
 
 const playOrPauseHandler = (details: MediaSessionActionDetails) => {
     const currentTime = Date.now();
-    if (!sequence.length) {
+    if (!actionSequence.length) {
         time = currentTime;
     }
 
-    sequence.push({
+    actionSequence.push({
         details: details,
         delta: currentTime - time,
     });
@@ -109,11 +230,8 @@ const playOrPauseHandler = (details: MediaSessionActionDetails) => {
 
     debouncedHandler(details);
 
-    if (details.action === 'pause') {
-        changePlaybackState('playing');
-    } else {
-        changePlaybackState('paused');
-    }
+    const playbackState = details.action === 'pause' ? 'playing' : 'paused';
+    changePlaybackState(playbackState);
 }
 
 session.setActionHandler('pause', playOrPauseHandler);
@@ -138,11 +256,11 @@ defineProperty(overridePrototype, 'setActionHandler', {
         }
 
         if (!handler) {
-            delete actionCallbackMap[action];
+            delete actionHandleCallbackMap[action];
             return;
         }
 
-        actionCallbackMap[action] = handler;
+        actionHandleCallbackMap[action] = handler;
     },
 });
 
@@ -187,12 +305,12 @@ defineProperty(self, 'MediaSession', {
 
 function changePlaybackState(
     playbackState: MediaSessionPlaybackState,
-    updateWidget = false
+    update = false
 ) {
     session.playbackState = playbackState;
     console.log('MediaSession playbackState:', playbackState);
 
-    if (updateWidget) {
-        createNotification(playbackState, undefined, '1');
+    if (update) {
+        updateNotification(notificationId, playbackState, undefined);
     }
 }
