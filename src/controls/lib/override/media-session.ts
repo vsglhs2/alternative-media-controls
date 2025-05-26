@@ -111,6 +111,7 @@ const handleSequence = debounce((details: MediaSessionActionDetails) => {
     actionSequence.length = 0;
 }, config.value.delay);
 
+// @ts-expect-error TODO: remove, when initializer will be created
 const cleanup = config.on((config) => {
     handleSequence.delay = config.delay;
 });
@@ -135,6 +136,7 @@ const interceptHandler = (details: MediaSessionActionDetails) => {
     changePlaybackState(playbackState);
 }
 
+// @ts-expect-error TODO: remove, when initializer will be created
 const cleanup2 = interceptedActions.on((current, previous) => {
     for (const action of previous) {
         session.setActionHandler(action, null);

@@ -13,8 +13,7 @@ const overrideAudio = function (this: HTMLAudioElement, src?: string) {
         return Math.max(min, Math.min(max, volume));
     }
 
-    // TODO: add cleanup
-    // TODO: notify when audio.volume > 1
+    // @ts-expect-error TODO: remove, when initializer will be created
     const cleanup = globalVolume.on((volume) => {
         globalVolume.value = valueBetween(volume);
         audio.volume = valueBetween(rawVolume * globalVolume.value);

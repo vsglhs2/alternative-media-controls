@@ -4,6 +4,7 @@ import { HandlerSequence } from "./sequence";
 
 export class LinearHandlerSequence extends HandlerSequence {
     public getHandler(
+        // @ts-ignore 
         current: MediaSessionActionDetails,
         sequence: ActionSequence
     ): Handler {

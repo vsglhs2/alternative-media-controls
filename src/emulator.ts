@@ -5,7 +5,7 @@ import { VolumeHandler } from "./controls/handler";
 import { GroupHandler, MediaSessionHandler, InputHandler } from "./controls/lib/handler";
 import { globalVolume } from "./controls/override/audio";
 import { config } from "./controls/lib/config";
-import { PassActionHandler, PlayOrPauseHandler } from "./controls/lib/handler/media-session";
+import { PassActionHandler } from "./controls/lib/handler/media-session";
 
 config.value = {
     delay: 1000,
