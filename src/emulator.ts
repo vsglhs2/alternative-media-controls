@@ -1,7 +1,7 @@
 import { createNotification, requestNotificationPermission, updateNotification } from "./notification";
 
 const config = {
-    delay: 700,
+    delay: 1000,
     volumeDelta: 0.01,
 };
 
@@ -47,17 +47,21 @@ const actionHandleCallbackMap: Partial<
     >
 > = {};
 
-abstract class Handler {
-    public title: string;
-
-    constructor(title: string) {
-        this.title = title;
-    }
-
+abstract class Handle {
     public abstract handle(
         current: MediaSessionActionDetails,
         sequence: ActionSequenceItem[],
-    ): void;
+    ): void;    
+}
+
+abstract class Handler extends Handle {
+    public title: string;
+
+    constructor(title: string) {
+        super();
+
+        this.title = title;
+    }
 }
 
 class MediaSessionHandler extends Handler {
@@ -94,6 +98,10 @@ class PlayOrPauseHandler extends MediaSessionHandler {
         this.title = this.action;
 
         super.handle(current, sequence);
+
+        const initialAction = sequence[0].details.action;
+        const nextState = initialAction === 'pause' ? 'paused' : 'playing';
+        changePlaybackState(nextState);
     }
 }
 
@@ -102,17 +110,16 @@ type ExitPosition = 'begin' | 'end';
 type GroupHandlerOptions = {
     title: string;
     exitPosition: ExitPosition;
+    onExit: () => void;
 };
 
-type HandlerSequence = Handler[];
-
-const sequenceStack: HandlerSequence[] = [];
+const sequenceStack: LinearHandlerSequence[] = [];
 
 class GroupHandler extends Handler {
-    protected handlers: HandlerSequence;
+    protected handlers: Handler[];
 
     public handle(): void {
-        sequenceStack.unshift(this.handlers);
+        sequenceStack.unshift(new LinearHandlerSequence(this.handlers));
     }
 
     constructor(
@@ -127,9 +134,14 @@ class GroupHandler extends Handler {
         super(title);
         this.handlers = handlers ?? [];
 
-        const exitPosition = options.exitPosition ?? 'end';
-        const exitHandler = new ExitHandler();
+        const onExit = () => {
+            sequenceStack.shift();
 
+            options.onExit?.();
+        };
+        const exitHandler = new CallbackHandler('exit', onExit);
+
+        const exitPosition = options.exitPosition ?? 'end';        
         if (exitPosition === 'end') {
             this.handlers.push(exitHandler);
         } else {
@@ -138,13 +150,17 @@ class GroupHandler extends Handler {
     }
 }
 
-class ExitHandler extends Handler {
-    constructor() {
-        super('exit');
+class CallbackHandler extends Handler {
+    private onHandle: () => void;
+
+    constructor(title: string, onHandle: () => void) {
+        super(title);
+
+        this.onHandle = onHandle;
     }
 
     public handle(): void {
-        sequenceStack.shift();
+        this.onHandle();
     }
 }
 
@@ -193,6 +209,58 @@ class VolumeHandler extends Handler {
 //     }
 // }
 
+class InputCharacterHandler extends Handler {
+    protected character: string;
+    protected onCharacter: (character: string) => void;
+
+    constructor(
+        character: string,
+        onCharacter: (character: string) => void
+    ) {
+        const title = `Character ${character}`;
+        super(title);
+
+        this.character = character;
+        this.onCharacter = onCharacter;
+    }
+
+    public handle(): void {
+        this.onCharacter(this.character);
+    }
+}
+
+class InputHandler extends GroupHandler {
+    protected characters: string;
+
+    constructor(
+        characters: string | string[],
+        onInput: (characters: string) => void,
+    ) {
+        const handlers: Handler[] = [];
+
+        for (const character of characters) {
+            const handler = new InputCharacterHandler(
+                character, 
+                (character) => {
+                    this.characters += character;
+                },
+            );
+            handlers.push(handler);
+        }
+
+        const clearHandler  =new CallbackHandler(
+            'clear', 
+            () => this.characters = ''
+        );
+        handlers.push(clearHandler);
+
+        const onExit = () => onInput(this.characters);
+        super({ title: 'Input', onExit: onExit }, ...handlers);
+
+        this.characters = '';
+    }
+}
+
 const emulatedActions: MediaSessionAction[] = [
     'pause',
     'play',
@@ -202,7 +270,58 @@ const emulatedActions: MediaSessionAction[] = [
     'seekbackward',
 ];
 
-const mainSequence = [
+abstract class HandlerSequence extends Handle {
+    public handlers: Handler[];
+
+    public handle(
+        current: MediaSessionActionDetails,
+        sequence: ActionSequenceItem[]
+    ): void {
+        const handler = this.getHandler(current, sequence);
+        if (handler) {
+            handler.handle(current, sequence);
+        }
+
+        const body = getNotificationBody();
+        const handlerTitle = handler?.title ?? 'no handler';
+        const title = getNotificationTitle(handlerTitle);
+
+        createNotification(title, body, notificationId);
+        console.log('Handled sequence:', sequence.map(a => a.details.action));
+
+        let chosenTitle = `${handler?.constructor.name ?? 'Not handler'}`;
+        if (handlerTitle) {
+            chosenTitle += ` (${handlerTitle})`;
+        }
+        console.log('Choose handler:', chosenTitle);
+        console.log('Route:', body);
+
+        // TODO: make this optionally
+        session.metadata = getUpdatedMetadata(handlerTitle, body);
+    }
+
+    public abstract getHandler(
+        current: MediaSessionActionDetails,
+        sequence: ActionSequenceItem[]
+    ): Handler | undefined;
+
+    constructor(handlers: Handler[]) {
+        super();
+        this.handlers = handlers;
+    }
+}
+
+class LinearHandlerSequence extends HandlerSequence {
+    public getHandler(
+        current: MediaSessionActionDetails,
+        sequence: ActionSequenceItem[]
+    ): Handler {
+        return this.handlers[sequence.length - 1];
+        
+    }
+}
+
+const mainSequence = new LinearHandlerSequence([
     new PlayOrPauseHandler(),
     new GroupHandler(
         { title: 'track' },
@@ -216,18 +335,24 @@ const mainSequence = [
     ),
     new GroupHandler(
         { title: 'volume' },
-        new VolumeHandler(config.volumeDelta),
-        new VolumeHandler(-config.volumeDelta),
         new VolumeHandler(config.volumeDelta * 3),
         new VolumeHandler(-config.volumeDelta * 3),
+        new InputHandler('1234567890', c => {
+            if (!c) return;
+
+            const parsed = parseInt(c);
+            if (isNaN(parsed)) return;
+
+            globalVolume.value = parsed / 100;
+        }),
     ),
-];
+]);
 
 sequenceStack.unshift(mainSequence);
 
 function getNotificationBody() {
     const sequence = sequenceStack[0];
-    const postfix = sequence
+    const postfix = sequence.handlers
         .map((h, i) => `${i + 1} - ${h.title}`)
         .join(', ');
 
@@ -278,28 +403,9 @@ let time = 0;
 
 const debouncedHandler = debounce((details: MediaSessionActionDetails) => {
     const sequence = sequenceStack[0];
-    const handler = sequence[actionSequence.length - 1];
-
-    if (handler) {
-        handler.handle(details, actionSequence);
-    }
-
-    if (handler instanceof PlayOrPauseHandler) {
-        const initialAction = actionSequence[0].details.action
-        const nextState = initialAction === 'pause' ? 'paused' : 'playing';
-        changePlaybackState(nextState);
-    }
+    sequence.handle(details, actionSequence);
 
     actionSequence.length = 0;
-
-    const body = getNotificationBody();
-    const handlerTitle = handler?.title ?? 'no handler';
-    const title = getNotificationTitle(handlerTitle);
-
-    createNotification(title, body, notificationId);
-
-    // TODO: make this optionally
-    session.metadata = getUpdatedMetadata(handlerTitle, body);
 }, actionsDelay);
 
 const playOrPauseHandler = (details: MediaSessionActionDetails) => {

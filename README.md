@@ -2,7 +2,7 @@
 
 ## Motivation
 
-Android firefox do not expose all media session controls. Only play and pause buttons are available to user alongside with title, artist and artwork information. So I thought about possible approaches and came along with this workaround. 
+Android firefox do not expose all media session controls. Only play and pause buttons are available to user alongside with title, artist and artwork information.This repository, though not ideal solution, contains possible workaround. In future it may be feasible to use it to register arbitrary actions and call them via remote device with media capabilities (like earbuds)
 
 ## Possible actions and limitations that can be used for implementation
 
