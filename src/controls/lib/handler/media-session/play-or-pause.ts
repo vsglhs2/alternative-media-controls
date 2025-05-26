@@ -1,5 +1,4 @@
 import type { ActionSequence } from "../../action";
-import { changePlaybackState } from "../../override/media-session";
 import { PassActionHandler } from "./pass-action";
 
 export class PlayOrPauseHandler extends PassActionHandler {
@@ -16,6 +15,7 @@ export class PlayOrPauseHandler extends PassActionHandler {
 
         const initialAction = sequence[0].details.action;
         const nextState = initialAction === 'pause' ? 'paused' : 'playing';
+        // session.playbackState = nextState;
         changePlaybackState(nextState);
     }
 }

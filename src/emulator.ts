@@ -1,4 +1,3 @@
-import { interceptedActions } from "./controls/lib/override/media-session";
 import { LinearHandlerSequence, sequenceStack } from "./controls/lib/sequence";
 import { requestNotificationPermission } from "./controls/lib/notification";
 import { VolumeHandler } from "./controls/handler";
@@ -7,12 +6,13 @@ import { globalVolume } from "./controls/override/audio";
 import { config } from "./controls/lib/config";
 import { PassActionHandler } from "./controls/lib/handler/media-session";
 
+
 config.value = {
     delay: 1000,
     volumeDelta: 0.1,
 };
 
-interceptedActions.value = [
+context.interceptedActions = [
     'pause',
     'play',
     'nexttrack',
@@ -54,7 +54,7 @@ const mainSequence = new LinearHandlerSequence([
     ),
 ]);
 
-sequenceStack.push(mainSequence);
+sequenceStack.value.push(mainSequence);
 
 // TODO: find out why not every webpage shows permission request
 requestNotificationPermission();

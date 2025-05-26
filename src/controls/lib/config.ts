@@ -1,4 +1,4 @@
-import { GlobalValue } from "./utils";
+import { createContext, GlobalValue } from "./utils";
 
 export type Config = {
     delay: number;
@@ -10,3 +10,15 @@ const defaultConfig: Config = {
     volumeDelta: 0.01,
 };
 export const config = new GlobalValue<Config>(defaultConfig);
+
+
+type Input = {
+    config: Config
+};
+
+export function createConfigContext() {
+    return createContext<Input>({
+        config: defaultConfig,
+    });
+
+}

@@ -1,5 +1,9 @@
 export class Stack<T> {
-    private stack: T[];
+    private readonly stack: T[];
+    
+    public get inner(): readonly T[] {
+        return this.stack;
+    }
 
     constructor() {
         this.stack = [];

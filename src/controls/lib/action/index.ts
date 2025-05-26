@@ -1,3 +1,5 @@
+import { createContext } from "../utils";
+
 export type ActionSequenceItem = {
     delta: number;
     details: MediaSessionActionDetails;
@@ -5,4 +7,12 @@ export type ActionSequenceItem = {
 
 export type ActionSequence = ActionSequenceItem[];
 
-export const actionSequence: ActionSequence = [];
+type Input = {
+    actionSequence: ActionSequence
+};
+
+export function createActionContext() {
+    return createContext<Input>({
+        actionSequence: [],
+    });
+}

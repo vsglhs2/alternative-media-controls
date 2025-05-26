@@ -1,4 +1,3 @@
-import { actionHandleCallbackMap } from "../../override/media-session";
 import { Handler } from "../handler";
 
 export class MediaSessionHandler extends Handler {

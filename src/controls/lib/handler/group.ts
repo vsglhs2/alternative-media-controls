@@ -1,5 +1,5 @@
 
-import { sequenceStack, LinearHandlerSequence } from "../sequence";
+import { LinearHandlerSequence } from "../sequence";
 import { CallbackHandler } from "./callback";
 import { Handler } from "./handler";
 
@@ -15,7 +15,7 @@ export class GroupHandler extends Handler {
     protected handlers: Handler[];
 
     public handle(): void {
-        sequenceStack.push(new LinearHandlerSequence(this.handlers));
+        sequenceStack.value.push(new LinearHandlerSequence(this.handlers));
     }
 
     constructor(
@@ -31,7 +31,7 @@ export class GroupHandler extends Handler {
         this.handlers = handlers ?? [];
 
         const onExit = () => {
-            sequenceStack.pop();
+            sequenceStack.value.pop();
 
             options.onExit?.();
         };

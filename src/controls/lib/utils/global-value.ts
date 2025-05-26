@@ -1,10 +1,10 @@
 export type CleanupCallback = () => void;
 
 /**
- * Global value is simple get set store that provide a way
- * to listen when value set occurs
+ * Global value is simple store that provide a way
+ * to listen when value assign occurs (without checking if it has changed)
  */
-export class GlobalValue<T> {
+export class GlobalValue<T = unknown> {
     private target: EventTarget;
     private _value: T;
     private previousValue: T;

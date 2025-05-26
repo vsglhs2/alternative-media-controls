@@ -1,11 +1,7 @@
 import type { ActionSequence } from "../action";
 import { Handle, Handler } from "../handler";
-import { createNotification, notificationId } from "../notification";
-import { session } from "../override";
+import { createNotification } from "../notification";
 import { getNotificationBody, getNotificationTitle, getUpdatedMetadata } from "../state";
-import { Stack } from "../utils";
-
-export const sequenceStack = new Stack<HandlerSequence>();
 
 export abstract class HandlerSequence extends Handle {
     public handlers: Handler[];
@@ -33,7 +29,7 @@ export abstract class HandlerSequence extends Handle {
         console.log('Choose handler:', chosenTitle);
         console.log('Route:', body);
 
-        // TODO: make this optionally
+        // TODO: make this optionally (via state view)
         session.metadata = getUpdatedMetadata(handlerTitle, body);
     }
 
@@ -44,6 +40,7 @@ export abstract class HandlerSequence extends Handle {
 
     constructor(handlers: Handler[]) {
         super();
+        
         this.handlers = handlers;
     }
 }

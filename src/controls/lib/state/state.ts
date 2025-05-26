@@ -1,6 +1,4 @@
 import { globalVolume } from "../../override/audio";
-import { globalMetadata, session } from "../override";
-import { sequenceStack } from "../sequence";
 
 // class State {}
 // class NotificationState extends State {}
@@ -9,7 +7,7 @@ import { sequenceStack } from "../sequence";
 // class LogState extends State {}
 
 export function getNotificationBody() {
-    const sequence = sequenceStack.head()!;
+    const sequence = sequenceStack.value.head()!;
     const postfix = sequence.handlers
         .map((h, i) => `${i + 1} - ${h.title}`)
         .join(', ');
