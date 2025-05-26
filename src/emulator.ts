@@ -148,14 +148,14 @@ class ExitHandler extends Handler {
     }
 }
 
-class GlobalValue extends EventTarget {
-    #value: number;
+class GlobalValue<T> extends EventTarget {
+    #value: T;
 
     get value() {
         return this.#value;
     }
 
-    set value(value: number) {
+    set value(value: T) {
         this.#value = value;
 
         const event = new CustomEvent('value', {
@@ -164,7 +164,7 @@ class GlobalValue extends EventTarget {
         this.dispatchEvent(event);
     }
 
-    constructor(initial: number) {
+    constructor(initial: T) {
         super();
 
         this.#value = initial;
@@ -231,11 +231,35 @@ function getNotificationBody() {
         .map((h, i) => `${i + 1} - ${h.title}`)
         .join(', ');
 
-    return `${postfix}`
+    return `${postfix} (volume = ${globalVolume.value})`;
 }
 
-function getNotificationTitle(handler: string) {
-    return `${session.playbackState}: (${handler})`;
+function getNotificationTitle(handler?: string) {
+    let title = session.playbackState as string;
+    if (handler) {
+        title = `${title}: (${handler})`;
+    }
+
+    return title;
+}
+
+function getUpdatedMetadata(title: string, body: string) {
+    const data: MediaMetadataInit = {
+        title: globalMetadata.value?.title,
+        album: globalMetadata.value?.album,
+        artist: globalMetadata.value?.artist,
+        artwork: globalMetadata.value?.artwork?.slice(),
+    };
+
+    if (title) {
+        data.title = `${data.title} (${session.playbackState}) (${title})`;
+    }
+
+    if (data.artist) {
+        data.artist = `${data.artist} (${body})`;
+    }
+    
+    return new MediaMetadata(data);
 }
 
 const notificationId = 'notification-1';
@@ -251,7 +275,6 @@ const actionSequence: ActionSequence = [];
 const actionsDelay = config.delay;
 
 let time = 0;
-
 
 const debouncedHandler = debounce((details: MediaSessionActionDetails) => {
     const sequence = sequenceStack[0];
@@ -270,9 +293,13 @@ const debouncedHandler = debounce((details: MediaSessionActionDetails) => {
     actionSequence.length = 0;
 
     const body = getNotificationBody();
-    const title = getNotificationTitle(handler?.title ?? 'no handler');
+    const handlerTitle = handler?.title ?? 'no handler';
+    const title = getNotificationTitle(handlerTitle);
 
     createNotification(title, body, notificationId);
+
+    // TODO: make this optionally
+    session.metadata = getUpdatedMetadata(handlerTitle, body);
 }, actionsDelay);
 
 const playOrPauseHandler = (details: MediaSessionActionDetails) => {
@@ -332,12 +359,16 @@ defineProperty(overridePrototype, 'setPositionState', {
     },
 });
 
+const globalMetadata = new GlobalValue<MediaMetadata | null>(null);
+
 defineProperty(overridePrototype, 'metadata', {
     get: () => {
         return session.metadata;
     },
     set: (metadata: MediaMetadata | null) => {
         console.log('Set metadata:', metadata);
+
+        globalMetadata.value = metadata;
         session.metadata = metadata;
     },
 });
@@ -374,6 +405,7 @@ function changePlaybackState(
     }
 }
 
+// TODO: find out why not every webpage shows permission request
 requestNotificationPermission();
 
 const Audio = window.Audio;
