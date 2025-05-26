@@ -4,8 +4,7 @@ import { sequenceStack } from "../sequence";
 import { config } from "../config";
 import { debounce, defineProperty, GlobalValue } from "../utils";
 
-const descriptors = Object.getOwnPropertyDescriptors(MediaSession.prototype);
-const copiedPrototype = Object.defineProperties({}, descriptors) as MediaSession;
+const OriginalMediaSession = self.MediaSession;
 
 export const session = navigator.mediaSession;
 const overridePrototype = {} as MediaSession;
@@ -34,7 +33,7 @@ defineProperty(overridePrototype, 'setActionHandler', {
         handler: MediaSessionActionHandler | null
     ): void {
         if (!isActionIntercepted(action)) {
-            return copiedPrototype.setActionHandler.call(session, action, handler);
+            return session.setActionHandler(action, handler);
         }
 
         if (!handler) {
@@ -51,7 +50,7 @@ defineProperty(overridePrototype, 'setPositionState', {
         this: MediaSession,
         state?: MediaPositionState
     ): void {
-        return copiedPrototype.setPositionState.call(session, state);
+        return session.setPositionState(state);
     },
 });
 
