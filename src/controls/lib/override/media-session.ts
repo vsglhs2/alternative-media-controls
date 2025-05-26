@@ -10,9 +10,9 @@ const copiedPrototype = Object.defineProperties({}, descriptors) as MediaSession
 export const session = navigator.mediaSession;
 const overridePrototype = {} as MediaSession;
 
-function isActionEmulated(action: MediaSessionAction) {
+function isActionIntercepted(action: MediaSessionAction) {
     return (
-        sequenceSourceActions.value.includes(action) ||
+        interceptedActions.value.includes(action) ||
         action === 'pause' ||
         action === 'play'
     );
@@ -25,7 +25,7 @@ export const actionHandleCallbackMap: Partial<
     >
 > = {};
 
-export const sequenceSourceActions = new GlobalValue<MediaSessionAction[]>([])
+export const interceptedActions = new GlobalValue<MediaSessionAction[]>([])
 
 defineProperty(overridePrototype, 'setActionHandler', {
     value: function (
@@ -33,7 +33,7 @@ defineProperty(overridePrototype, 'setActionHandler', {
         action: MediaSessionAction,
         handler: MediaSessionActionHandler | null
     ): void {
-        if (!isActionEmulated(action)) {
+        if (!isActionIntercepted(action)) {
             return copiedPrototype.setActionHandler.call(session, action, handler);
         }
 
@@ -117,7 +117,7 @@ const cleanup = config.on((config) => {
 
 let time = 0;
 
-const emulatedHandler = (details: MediaSessionActionDetails) => {
+const interceptHandler = (details: MediaSessionActionDetails) => {
     const currentTime = Date.now();
     if (!actionSequence.length) {
         time = currentTime;
@@ -135,12 +135,12 @@ const emulatedHandler = (details: MediaSessionActionDetails) => {
     changePlaybackState(playbackState);
 }
 
-const cleanup2 = sequenceSourceActions.on((current, previous) => {
+const cleanup2 = interceptedActions.on((current, previous) => {
     for (const action of previous) {
         session.setActionHandler(action, null);
     }
 
     for (const action of current) {
-        session.setActionHandler(action, emulatedHandler);
+        session.setActionHandler(action, interceptHandler);
     }
 });

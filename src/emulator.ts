@@ -1,27 +1,34 @@
-import { sequenceSourceActions } from "./controls/lib/override/media-session";
+import { interceptedActions } from "./controls/lib/override/media-session";
 import { LinearHandlerSequence, sequenceStack } from "./controls/lib/sequence";
 import { requestNotificationPermission } from "./controls/lib/notification";
 import { VolumeHandler } from "./controls/handler";
-import { PlayOrPauseHandler, GroupHandler, MediaSessionHandler, InputHandler } from "./controls/lib/handler";
+import { GroupHandler, MediaSessionHandler, InputHandler } from "./controls/lib/handler";
 import { globalVolume } from "./controls/override/audio";
 import { config } from "./controls/lib/config";
+import { PassActionHandler, PlayOrPauseHandler } from "./controls/lib/handler/media-session";
 
 config.value = {
     delay: 1000,
     volumeDelta: 0.1,
 };
 
-sequenceSourceActions.value = [
+interceptedActions.value = [
     'pause',
     'play',
     'nexttrack',
     'previoustrack',
     'seekforward',
     'seekbackward',
+    'seekto',
 ];
 
 const mainSequence = new LinearHandlerSequence([
-    new PlayOrPauseHandler(),
+    new PassActionHandler(),
+    new GroupHandler(
+        {title: 'playback' },
+        new MediaSessionHandler('play'),
+        new MediaSessionHandler('pause'),
+    ),
     new GroupHandler(
         { title: 'track' },
         new MediaSessionHandler('nexttrack'),

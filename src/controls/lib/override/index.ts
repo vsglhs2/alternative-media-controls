@@ -1,1 +1,1 @@
-export { sequenceSourceActions as emulatedActions, session, globalMetadata } from "./media-session";
+export { interceptedActions, session, globalMetadata } from "./media-session";

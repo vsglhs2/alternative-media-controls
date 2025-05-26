@@ -6,6 +6,7 @@ import { sequenceStack } from "../sequence";
 // class NotificationState extends State {}
 // class MetadataState extends State {}
 // class UIState extends State {}
+// class LogState extends State {}
 
 export function getNotificationBody() {
     const sequence = sequenceStack.head()!;
