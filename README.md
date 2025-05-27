@@ -24,7 +24,7 @@ List of actions that are available without direct interaction with webpage:
 
 \* - questionable utility ** - do not work in android firefox
 
-Only pause and play actions are available without screen unlock on android
+Only pause and play actions are available without screen unlock on firefox android
 
 ## MVP
 
