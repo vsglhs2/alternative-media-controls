@@ -11,6 +11,8 @@ export abstract class HandlerSequence extends Handle {
         sequence: ActionSequence
     ): void {
         const handler = this.getHandler(current, sequence);
+        this.context.activeHandler = handler;
+        
         if (handler) {
             handler.handle(current, sequence);
         }

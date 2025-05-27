@@ -1,4 +1,5 @@
 import type { Context } from "../utils/context";
+import type { CleanupCallback } from "../utils/global-value";
 import type { InitialContextInput } from "./create-initial-context";
 import type { MediaSessionInput, MediaSessionPrototypeInput } from "./override-media-session";
 
@@ -21,6 +22,12 @@ export abstract class WithGlobalContext {
 
         return WithGlobalContext.context;
     }
+}
 
-    constructor() {}
+export function setupGlobalContext(context: GlobalContext): CleanupCallback {
+    WithGlobalContext.context = context;
+
+    return () => {
+        WithGlobalContext.context = undefined;
+    };
 }

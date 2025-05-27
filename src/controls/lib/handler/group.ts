@@ -16,6 +16,7 @@ export class GroupHandler extends Handler {
 
     public handle(): void {
         this.context.sequenceStack.push(new LinearHandlerSequence(this.handlers));
+        this.context.trigger('sequenceStack');
     }
 
     constructor(
@@ -32,6 +33,7 @@ export class GroupHandler extends Handler {
 
         const onExit = () => {
             this.context.sequenceStack.pop();
+            this.context.trigger('sequenceStack');
 
             options.onExit?.();
         };

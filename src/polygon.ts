@@ -1,9 +1,20 @@
 import { VolumeHandler } from "./controls/handler";
-import { alternativeMediaSession, CallbackHandler, GroupHandler, InputHandler, LinearHandlerSequence, MediaSessionHandler, PassActionHandler, requestNotificationPermission } from "./controls/lib";
+import { alternativeMediaSession, CallbackHandler, GroupHandler, InputHandler, LinearHandlerSequence, MediaSessionHandler, PassActionHandler, requestNotificationPermission, type EventKey, type State } from "./controls/lib";
 import { globalVolume } from "./controls/override/audio";
 
 function startSession() {
     console.log('Starting session');
+
+    function callback(key: EventKey, state: State) {
+        console.log(key, state);
+    }
+
+    alternativeMediaSession.on('start', callback);
+    alternativeMediaSession.on('stop', callback);
+    alternativeMediaSession.on('state', callback);
+    alternativeMediaSession.on('sequence', callback);
+    alternativeMediaSession.on('action', callback);
+    alternativeMediaSession.on('handler', callback);
 
     alternativeMediaSession.start();
     alternativeMediaSession.handleDelay = 700;
@@ -17,16 +28,6 @@ function startSession() {
         'seekbackward',
         'seekto',
     ];
-
-    setTimeout(() => {
-        alternativeMediaSession.interceptActions = [
-            'nexttrack',
-            'previoustrack',
-            'seekforward',
-            'seekbackward',
-            'seekto',
-        ];
-    }, 3000);
 
     alternativeMediaSession.handlerSequence = new LinearHandlerSequence([
         new PassActionHandler(),
@@ -59,14 +60,15 @@ function startSession() {
             }),
         ),
         new CallbackHandler('stop', () => {
-            alternativeMediaSession.stop();
+            setTimeout(() => alternativeMediaSession.stop());
             console.log('stopped session');
         }),
-    ]); 
+    ]);
 }
 
-// TODO: find out why not every webpage shows permission request
+window.s = startSession;
+
+// TODO: find out why not every webpage shows permission request (on android firefox)
 requestNotificationPermission();   
 
-setTimeout(startSession, 2000);
-setTimeout(startSession, 15000);
+startSession();

@@ -5,8 +5,8 @@ export class Stack<T> {
         return this.stack;
     }
 
-    constructor() {
-        this.stack = [];
+    constructor(stack: T[] = []) {
+        this.stack = stack;
     }
 
     push(item: T) {

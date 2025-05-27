@@ -1,3 +1,13 @@
+let globalIgnoring = false;
+
+export function withIgnore(callback: () => void) {
+    globalIgnoring = true;
+
+    callback();
+
+    globalIgnoring = false;
+}
+
 export type CleanupCallback = () => void;
 
 /**
@@ -9,9 +19,11 @@ export class GlobalValue<T = unknown> {
     private _value: T;
     private previousValue: T;
     private ignoring: boolean;
+    private cleanups: CleanupCallback[];
 
     constructor(initial: T) {
         this.target = new EventTarget();
+        this.cleanups = [];
         this.ignoring = false;
 
         this._value = initial;
@@ -28,7 +40,7 @@ export class GlobalValue<T = unknown> {
         this.previousValue = this._value;
         this._value = value;
 
-        if (!this.ignoring) {
+        if (!this.ignoring && !globalIgnoring) {
             this.trigger();
         }
     }
@@ -59,6 +71,15 @@ export class GlobalValue<T = unknown> {
             }
         }, { signal: controller.signal });
 
-        return () => controller.abort();
+        const cleanup = () => controller.abort();
+        this.cleanups.push(cleanup);
+
+        return cleanup;
+    }
+
+    public release() {
+        for (const cleanup of this.cleanups) {
+            cleanup();
+        }
     }
 }

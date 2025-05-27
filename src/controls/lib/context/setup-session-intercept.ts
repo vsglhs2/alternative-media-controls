@@ -1,4 +1,5 @@
 import { debounce, defineProperty } from "../utils";
+import { SequenceError } from "./initialize";
 import type { StoredMediaSessionActionHandler } from "./override-media-session";
 import type { GlobalContext } from "./with-context";
 
@@ -14,11 +15,12 @@ export function setupSessionIntercept(
     const handleSequence = debounce((details: MediaSessionActionDetails) => {
         const sequence = context.sequenceStack.head();
         if (!sequence) {
-            throw new Error('There is no sequence in stack');
+            throw new SequenceError();
         }
 
         sequence.handle(details, context.actionSequence);
         context.actionSequence.length = 0;
+        context.trigger('actionSequence');
     }, context.handleDelay);
 
     context.on('handleDelay', (delay) => {
@@ -38,6 +40,7 @@ export function setupSessionIntercept(
             delta: currentTime - time,
         });
         time = currentTime;
+        context.trigger('actionSequence');
 
         handleSequence(details);
 
