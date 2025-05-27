@@ -1,4 +1,4 @@
-# Alternative media controls
+# Alternative media session
 
 ## Motivation
 
