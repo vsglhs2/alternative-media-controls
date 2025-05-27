@@ -2,7 +2,9 @@
 
 ## Motivation
 
-Android firefox do not expose all media session controls. Only play and pause buttons are available to user alongside with title, artist and artwork information. This repository, though not ideal solution, contains possible workaround
+Somehow firefox on android do not expose all media session controls. Only "play" and "pause" buttons are available to user alongside with title, artist and artwork metadata information (not always).
+
+This project tries to reduce the gap in Media Session API as much as possible by utilizing offscreen ways to interact with browser: notifications and basic media session controls. In addition, project aims to provide functionality to map custom actions on top of those ways as its base.
 
 ## Possible actions and limitations that can be used for implementation
 
@@ -10,69 +12,34 @@ List of actions that are available without direct interaction with webpage:
 
 1. Notifications:
     - click
-    - show (worthless)
-    - close (do not work in android firefox)
+    - show*
+    - close**
+    - actions (buttons)
+
 2. Media session controls:
     - play
     - pause
-    - stop (do not work in android firefox)
+    - stop**
+    - etc...
 
-Only pause and play actions are available without screen unlock
+\* - questionable utility ** - do not work in android firefox
 
-## Current implementation
+Only pause and play actions are available without screen unlock on android
 
-per tap (count):
-1. play or pause
-2. track:
-    1. nexttrack
-    2. previoustrack
-    3. exit
-3. seek
-    1. seekforward
-    2. seekbackward
-    3. exit
-4. volume
-    1. volumeup
-    2. volumedown
-    3. exit
+## TODO
 
-
-## Need to implement
-- dragable seek (?)
-- previous video
-- next video
-- restart video (?)
-- chapter information
-- metadata information
-- volume regulation (override audio element?)
-- seek widget (?)
-- in locked mode show only one notification, otherwise, as much, as need (?)
-- use chapters for showing previous and next track (?)
-- maybe use silent audio to force showing pause button on firefox android (?)
-- a way to programmatically customize controls behavior
-
-# Possible ways to organize interactions
-1. Play/pause sequencing (short + long presses)
-2. Nesting action groups like:
-    - player: (1)
-        - exit: (1)
-        - play: (2)
-        - pause: (3)
-        - nexttrack: (4)
-        - prevtrack: (5)
-        - ...
-
-    - chapters: (2)
-        - exit: (1)
-        - chapter1: (2)
-        - chapter2: (3)
-        - ...
-
-    - ...
-3. Show media session metadata and conditionally show actions info via notifications
-
-## Intention
-
-- override firefox media session actions
-- provide a way to emulate those actions by other means
-- give to user a customizable set of controls to map to actions
+- [ ] add a way to handle action on notification events (click, show, close) (maybe add new interceptor in media session interception manner)
+- [ ] add sequence with a way to process short/long presses
+- [ ] implement ChapterInformation API
+- [ ] fix small issues (TODO and THINK on code)
+- [ ] dragable seek (?)
+- [ ] restart video (?)
+- [ ] way to show metadata information
+- [ ] seek widget (?)
+- [ ] use information about screen lock
+- [ ] use chapters for showing previous and next track (?)
+- [ ] maybe use silent audio to force showing pause button on firefox android (?)
+- [ ] create npm package with core lib
+- [ ] create browser extension
+- [x] add tempermonkey version
+- [ ] explore, what can be done with locked screen
