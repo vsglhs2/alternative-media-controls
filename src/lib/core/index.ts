@@ -2,42 +2,12 @@
 // and Message API (for extension) for determining
 // tab that can use session for now
 
-import type { ActionSequenceItem } from "./action";
 import { initializeContext } from "./context";
-import { WithGlobalContext, type GlobalContext } from "./context/with-context";
-import type { Handler } from "./handler";
+import { WithGlobalContext } from "./context/with-context";
 import { PassActionHandler } from "./handler/media-session";
 import { LinearHandlerSequence, type HandlerSequence } from "./sequence";
-import { Stack } from "./utils";
+import { createDefaultState, createStateFromContext, type State } from "./state";
 import { GlobalValue, type CleanupCallback } from "./utils/global-value";
-
-export type State = Readonly<{
-    sequenceStack: Stack<HandlerSequence>;
-    actionSequence: readonly ActionSequenceItem[];
-    activeHandler: Handler | undefined;
-    interceptedActions: readonly MediaSessionAction[];
-    handleDelay: number;
-}>;
-
-function createDefaultState(): State {
-    return {
-        sequenceStack: new Stack(),
-        actionSequence: [],
-        activeHandler: undefined,
-        interceptedActions: [],
-        handleDelay: 0,
-    };
-}
-
-function createStateFromContext(context: GlobalContext): State {
-    return {
-        sequenceStack: new Stack(context.sequenceStack.inner.slice()),
-        actionSequence: context.actionSequence.slice(),
-        activeHandler: context.activeHandler,
-        interceptedActions: context.interceptedActions.slice(),
-        handleDelay: context.handleDelay,
-    };
-}
 
 export type EventKey =
     | 'start'
@@ -48,7 +18,6 @@ export type EventKey =
     | 'handler';
 
 type ExtendedEventKey = EventKey | 'none';
-
 
 // THINK: is it okay to use WithGlobalContext here?
 
@@ -178,7 +147,12 @@ export class AlternativeMediaSession extends WithGlobalContext {
 
 export const alternativeMediaSession = new AlternativeMediaSession();
 
-export { GlobalValue } from './utils';
+export {
+    GlobalValue,
+    createContext,
+    mergeContexts,
+    ContextError
+} from './utils';
 export {
     CallbackHandler,
     GroupHandler,
@@ -189,4 +163,4 @@ export {
 } from './handler';
 export { HandlerSequence, LinearHandlerSequence } from './sequence';
 export { requestNotificationPermission } from './notification';
-export { } from './state';
+export type { State } from './state';

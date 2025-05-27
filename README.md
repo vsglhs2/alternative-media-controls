@@ -42,4 +42,5 @@ Only pause and play actions are available without screen unlock on android
 - [ ] create npm package with core lib
 - [ ] create browser extension
 - [x] add tempermonkey version
+- [ ] setup linter
 - [ ] explore, what can be done with locked screen
