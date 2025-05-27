@@ -1,6 +1,20 @@
-// TODO: use WebLocks API (for same origin)
-// and Message API (for extension) for determining
-// tab that can use session for now
+export {
+    GlobalValue,
+    createContext,
+    mergeContexts,
+    ContextError
+} from './utils';
+export {
+    CallbackHandler,
+    GroupHandler,
+    InputHandler,
+    MediaSessionHandler,
+    PassActionHandler,
+    PlayOrPauseHandler
+} from './handler';
+export { HandlerSequence, LinearHandlerSequence } from './sequence';
+export { requestNotificationPermission } from './notification';
+export type { State } from './state';
 
 import { initializeContext } from "./context";
 import { WithGlobalContext } from "./context/with-context";
@@ -18,6 +32,10 @@ export type EventKey =
     | 'handler';
 
 type ExtendedEventKey = EventKey | 'none';
+
+// TODO: use WebLocks API (for same origin)
+// and Message API (for extension) for determining
+// tab that can use session for now
 
 // TODO (THINK): is it okay to use WithGlobalContext here?
 
@@ -146,21 +164,3 @@ export class AlternativeMediaSession extends WithGlobalContext {
 }
 
 export const alternativeMediaSession = new AlternativeMediaSession();
-
-export {
-    GlobalValue,
-    createContext,
-    mergeContexts,
-    ContextError
-} from './utils';
-export {
-    CallbackHandler,
-    GroupHandler,
-    InputHandler,
-    MediaSessionHandler,
-    PassActionHandler,
-    PlayOrPauseHandler
-} from './handler';
-export { HandlerSequence, LinearHandlerSequence } from './sequence';
-export { requestNotificationPermission } from './notification';
-export type { State } from './state';

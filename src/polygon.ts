@@ -1,9 +1,11 @@
 
 import { alternativeMediaSession, CallbackHandler, GroupHandler, InputHandler, LinearHandlerSequence, MediaSessionHandler, PassActionHandler, requestNotificationPermission, type EventKey, type State } from "./lib/core";
-import { globalVolume, VolumeHandler } from "./lib/extra/audio";
+import { globalVolume, VolumeHandler, overrideAudio } from "./lib/extra/audio";
 
 function startSession() {
     console.log('Starting session');
+
+    const cleanup = overrideAudio();
 
     function callback(key: EventKey, state: State) {
         console.log(key, state);
@@ -60,13 +62,23 @@ function startSession() {
             }),
         ),
         new CallbackHandler('stop', () => {
-            setTimeout(() => alternativeMediaSession.stop());
+            setTimeout(() => {
+                alternativeMediaSession.stop();
+                cleanup();
+            });
+
             console.log('stopped session');
         }),
     ]);
 }
 
-window.s = startSession;
+declare global {
+    interface Window {
+        startSession: typeof startSession;
+    }
+}
+
+window.startSession = startSession;
 
 // TODO: find out why not every webpage shows permission request (on android firefox)
 requestNotificationPermission();   
