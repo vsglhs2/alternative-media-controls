@@ -26,12 +26,18 @@ List of actions that are available without direct interaction with webpage:
 
 Only pause and play actions are available without screen unlock on android
 
+## MVP
+
+- [ ] implement StateViewer (log, notification, metadata)
+- [ ] make notification intercept and simple actions (except buttons)
+- [ ] add short/long press sequence
+- [ ] create simple ui configurator
+- [ ] add onExit method on Handle
+- [ ] fix small issues (TODO and THINK on code)
+
 ## TODO
 
-- [ ] add a way to handle action on notification events (click, show, close) (maybe add new interceptor in media session interception manner)
-- [ ] add sequence with a way to process short/long presses
 - [ ] implement ChapterInformation API
-- [ ] fix small issues (TODO and THINK on code)
 - [ ] dragable seek (?)
 - [ ] restart video (?)
 - [ ] way to show metadata information
@@ -39,8 +45,9 @@ Only pause and play actions are available without screen unlock on android
 - [ ] use information about screen lock
 - [ ] use chapters for showing previous and next track (?)
 - [ ] maybe use silent audio to force showing pause button on firefox android (?)
-- [ ] create npm package with core lib
+- [ ] create npm package with core and extra lib
 - [ ] create browser extension
 - [x] add tempermonkey version
 - [ ] setup linter
 - [ ] explore, what can be done with locked screen
+- [ ] Composite sequence (from other sequences)
