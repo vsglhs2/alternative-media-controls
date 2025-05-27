@@ -12,7 +12,7 @@ export default defineConfig({
         minify: false,
         rollupOptions: {
             input: {
-                'controls': '/src/emulator.ts',
+                'controls': '/src/polygon.ts',
             },
             output: [
                 {
