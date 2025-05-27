@@ -42,7 +42,8 @@ export class GlobalValue<T = unknown> {
      * @param callback Callback must be synchronous
      */
     on(callback: (value: T, previousValue: T) => void): CleanupCallback {
-        const { signal, abort } = new AbortController();
+        const controller = new AbortController();
+
         this.target.addEventListener('value', () => {   
             try {
                 this.ignoring = true;
@@ -56,8 +57,8 @@ export class GlobalValue<T = unknown> {
             } finally {
                 this.ignoring = false;
             }
-        }, { signal });
+        }, { signal: controller.signal });
 
-        return () => abort();
+        return () => controller.abort();
     }
 }

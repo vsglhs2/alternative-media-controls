@@ -1,13 +1,14 @@
-import { LinearHandlerSequence, sequenceStack } from "./controls/lib/sequence";
+import { LinearHandlerSequence } from "./controls/lib/sequence";
 import { requestNotificationPermission } from "./controls/lib/notification";
 import { VolumeHandler } from "./controls/handler";
-import { GroupHandler, MediaSessionHandler, InputHandler } from "./controls/lib/handler";
+import { GroupHandler, MediaSessionHandler, InputHandler, CallbackHandler } from "./controls/lib/handler";
 import { globalVolume } from "./controls/override/audio";
-import { config } from "./controls/lib/config";
 import { PassActionHandler } from "./controls/lib/handler/media-session";
+import { initializeContext } from "./controls/lib/context";
 
+const context = initializeContext();
 
-config.value = {
+context.config = {
     delay: 1000,
     volumeDelta: 0.1,
 };
@@ -41,8 +42,8 @@ const mainSequence = new LinearHandlerSequence([
     ),
     new GroupHandler(
         { title: 'volume' },
-        new VolumeHandler(config.value.volumeDelta * 3),
-        new VolumeHandler(-config.value.volumeDelta * 3),
+        new VolumeHandler(context.config.volumeDelta * 3),
+        new VolumeHandler(-context.config.volumeDelta * 3),
         new InputHandler('1234567890', c => {
             if (!c) return;
 
@@ -52,9 +53,14 @@ const mainSequence = new LinearHandlerSequence([
             globalVolume.value = parsed / 100;
         }),
     ),
+    new CallbackHandler('release', () => {
+        context.release();
+    }),
 ]);
 
-sequenceStack.value.push(mainSequence);
+context.sequenceStack.push(mainSequence);
 
 // TODO: find out why not every webpage shows permission request
 requestNotificationPermission();
+
+// context.release();

@@ -15,7 +15,7 @@ export class MediaSessionHandler extends Handler {
         // @ts-ignore
         sequence: ActionSequenceItem[]
     ): void {
-        const handler = actionHandleCallbackMap[this.action];
+        const handler = this.context.actionHandleCallbackMap[this.action];
 
         handler?.({ action: this.action });
     }

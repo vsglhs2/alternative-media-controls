@@ -1,52 +1,28 @@
+import { createContext, defineProperty } from "../utils";
 
-import type { ActionSequence } from "../action";
-import type { Config } from "../config";
-import { updateNotification } from "../notification";
-import type { HandlerSequence } from "../sequence";
-import { createContext, debounce, defineProperty, Stack } from "../utils";
-import type { Context } from "../utils/context";
+type ActionHandleCallbackMap = Partial<
+    Record<MediaSessionAction, MediaSessionActionHandler>
+>;
 
-type Input = {
-    notificationId: string;
-    sequenceStack: Stack<HandlerSequence>;
-    config: Config;
-    actionSequence: ActionSequence;
-};
-
-type Output = {
+export type MediaSessionInput = {
     session: MediaSession;
     actionHandleCallbackMap: ActionHandleCallbackMap;
     interceptedActions: MediaSessionAction[];
     globalMetadata: MediaMetadata | null;
 };
 
-type ActionHandleCallbackMap = Partial<
-    Record<MediaSessionAction, MediaSessionActionHandler>
->;
-
-export function createMediaSessionOverride(input: Context<Input>) {
+export function overrideMediaSession() {
     const MediaSession = self.MediaSession;
     const mediaSession = navigator.mediaSession;
 
-    const context = createContext<Output>({
+    const overridePrototype = {} as MediaSession;
+
+    const context = createContext<MediaSessionInput>({
         session: mediaSession,
         actionHandleCallbackMap: {},
         interceptedActions: [],
         globalMetadata: null,
     });
-
-    context.on(
-        'interceptedActions',
-        (current, previous) => {
-            for (const action of previous) {
-                mediaSession.setActionHandler(action, null);
-            }
-
-            for (const action of current) {
-                mediaSession.setActionHandler(action, interceptHandler);
-            }
-        }
-    );
 
     function isActionIntercepted(action: MediaSessionAction) {
         return (
@@ -55,8 +31,6 @@ export function createMediaSessionOverride(input: Context<Input>) {
             action === 'play'
         );
     }
-
-    const overridePrototype = {} as MediaSession;
 
     defineProperty(overridePrototype, 'setActionHandler', {
         value: function (
@@ -98,24 +72,13 @@ export function createMediaSessionOverride(input: Context<Input>) {
         },
     });
 
-    function changePlaybackState(
-        playbackState: MediaSessionPlaybackState,
-        update = false
-    ) {
-        mediaSession.playbackState = playbackState;
-        console.log('MediaSession playbackState:', playbackState);
-
-        if (update) {
-            updateNotification(input.notificationId, playbackState, undefined);
-        }
-    }
-
     defineProperty(overridePrototype, 'playbackState', {
         get: () => {
             return mediaSession.playbackState;
         },
         set: (playbackState: MediaSessionPlaybackState) => {
-            changePlaybackState(playbackState, true);
+            mediaSession.playbackState = playbackState;
+            console.log('MediaSession playbackState:', playbackState);
         },
     });
 
@@ -130,40 +93,6 @@ export function createMediaSessionOverride(input: Context<Input>) {
         value: overrideFunction,
     });
 
-    const handleSequence = debounce((details: MediaSessionActionDetails) => {
-        const sequence = input.sequenceStack.head();
-        if (!sequence) {
-            throw new Error('There is no sequence in stack');
-        }
-
-        sequence.handle(details, input.actionSequence);
-        input.actionSequence.length = 0;
-    }, input.config.delay);
-
-    input.on('config', (config) => {
-        handleSequence.delay = config.delay;
-    });
-
-    let time = 0;
-
-    const interceptHandler = (details: MediaSessionActionDetails) => {
-        const currentTime = Date.now();
-        if (!input.actionSequence.length) {
-            time = currentTime;
-        }
-
-        input.actionSequence.push({
-            details: details,
-            delta: currentTime - time,
-        });
-        time = currentTime;
-
-        handleSequence(details);
-
-        const playbackState = details.action === 'pause' ? 'playing' : 'paused';
-        changePlaybackState(playbackState);
-    }
-
     context.on('release', () => {
         defineProperty(navigator, 'mediaSession', {
             value: mediaSession,
@@ -171,7 +100,7 @@ export function createMediaSessionOverride(input: Context<Input>) {
 
         defineProperty(self, 'MediaSession', {
             value: MediaSession,
-        });        
+        });
     });
 
     return context;

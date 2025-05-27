@@ -1,4 +1,4 @@
-import './emulator';
+import './polygon';
 import { requestNotificationPermission } from './controls/lib/notification/notification';
 
 const AUDIO_URL = 'https://cdn.creazilla.com/sounds/15511112/mozart-concerto-no-18-in-g-flat-i-allegro-vivace-sound.mp3';

@@ -1,7 +1,7 @@
 import type { ActionSequence } from "../action";
 import { Handle, Handler } from "../handler";
 import { createNotification } from "../notification";
-import { getNotificationBody, getNotificationTitle, getUpdatedMetadata } from "../state";
+import { State } from "../state/state";
 
 export abstract class HandlerSequence extends Handle {
     public handlers: Handler[];
@@ -15,22 +15,24 @@ export abstract class HandlerSequence extends Handle {
             handler.handle(current, sequence);
         }
 
-        const body = getNotificationBody();
-        const handlerTitle = handler?.title ?? 'no handler';
-        const title = getNotificationTitle(handlerTitle);
+        // const state = new State();
 
-        createNotification(title, body, notificationId);
-        console.log('Handled sequence:', sequence.map(a => a.details.action));
+        // const body = state.getNotificationBody();
+        // const handlerTitle = handler?.title ?? 'no handler';
+        // const title = state.getNotificationTitle(handlerTitle);
 
-        let chosenTitle = `${handler?.constructor.name ?? 'Not handler'}`;
-        if (handlerTitle) {
-            chosenTitle += ` (${handlerTitle})`;
-        }
-        console.log('Choose handler:', chosenTitle);
-        console.log('Route:', body);
+        // createNotification(title, body, this.context.notificationId);
+        // console.log('Handled sequence:', sequence.map(a => a.details.action));
 
-        // TODO: make this optionally (via state view)
-        session.metadata = getUpdatedMetadata(handlerTitle, body);
+        // let chosenTitle = `${handler?.constructor.name ?? 'Not handler'}`;
+        // if (handlerTitle) {
+        //     chosenTitle += ` (${handlerTitle})`;
+        // }
+        // console.log('Choose handler:', chosenTitle);
+        // console.log('Route:', body);
+
+        // // TODO: make this optionally (via state view)
+        // this.context.session.metadata = state.getUpdatedMetadata(handlerTitle, body);
     }
 
     public abstract getHandler(

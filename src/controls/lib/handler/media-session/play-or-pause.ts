@@ -15,7 +15,7 @@ export class PlayOrPauseHandler extends PassActionHandler {
 
         const initialAction = sequence[0].details.action;
         const nextState = initialAction === 'pause' ? 'paused' : 'playing';
-        // session.playbackState = nextState;
-        changePlaybackState(nextState);
+
+        this.context.session.playbackState = nextState;
     }
 }

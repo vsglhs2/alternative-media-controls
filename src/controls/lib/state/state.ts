@@ -1,4 +1,5 @@
 import { globalVolume } from "../../override/audio";
+import { WithGlobalContext } from "../context/with-context";
 
 // class State {}
 // class NotificationState extends State {}
@@ -6,39 +7,44 @@ import { globalVolume } from "../../override/audio";
 // class UIState extends State {}
 // class LogState extends State {}
 
-export function getNotificationBody() {
-    const sequence = sequenceStack.value.head()!;
-    const postfix = sequence.handlers
-        .map((h, i) => `${i + 1} - ${h.title}`)
-        .join(', ');
+export class State extends WithGlobalContext {
+    getNotificationBody() {
+        const sequence = this.context.sequenceStack.head()!;
+        const postfix = sequence.handlers
+            .map((h, i) => `${i + 1} - ${h.title}`)
+            .join(', ');
 
-    return `${postfix} (volume = ${globalVolume.value})`;
-}
-
-export function getNotificationTitle(handler?: string) {
-    let title = session.playbackState as string;
-    if (handler) {
-        title = `${title}: (${handler})`;
+        return `${postfix} (volume = ${globalVolume.value})`;
     }
 
-    return title;
-}
+    getNotificationTitle(handler?: string) {
+        let title =  this.context.session.playbackState as string;
+        if (handler) {
+            title = `${title}: (${handler})`;
+        }
 
-export function getUpdatedMetadata(title: string, body: string) {
-    const data: MediaMetadataInit = {
-        title: globalMetadata.value?.title,
-        album: globalMetadata.value?.album,
-        artist: globalMetadata.value?.artist,
-        artwork: globalMetadata.value?.artwork?.slice(),
-    };
-
-    if (title) {
-        data.title = `${data.title} (${session.playbackState}) (${title})`;
+        return title;
     }
 
-    if (data.artist) {
-        data.artist = `${data.artist} (${body})`;
+    getUpdatedMetadata(title: string, body: string) {
+        const { globalMetadata, session } = this.context;
+
+        const data: MediaMetadataInit = {
+            title: globalMetadata?.title,
+            album: globalMetadata?.album,
+            artist: globalMetadata?.artist,
+            artwork: globalMetadata?.artwork?.slice(),
+        };
+
+        if (title) {
+            data.title = `${data.title} (${session.playbackState}) (${title})`;
+        }
+
+        if (data.artist) {
+            data.artist = `${data.artist} (${body})`;
+        }
+
+        return new MediaMetadata(data);
     }
-    
-    return new MediaMetadata(data);
 }
+

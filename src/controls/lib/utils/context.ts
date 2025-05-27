@@ -90,18 +90,18 @@ export function createContext<
     Input extends Record<string, unknown>
 >(input: Input): Context<Input> {
     const context = Object.create(contextPrototype) as Context<Input>;
-    const cleanups: CleanupCallback[] = [];
+    const cleanups: Set<CleanupCallback> = new Set();
     const globalValueRecord: Record<string, GlobalValue> = {};
 
     for (const [key, value] of Object.entries(input)) {
         const globalValue = new GlobalValue(value);
         globalValueRecord[key] = globalValue;
 
-        Object.assign(context, {
-            get [key]() {
+        defineProperty(context, key, {
+            get: () => {
                 return globalValue.value;
             },
-            set [key](value: unknown) {
+            set: (value: unknown) => {
                 globalValue.value = value;
             },
         });
