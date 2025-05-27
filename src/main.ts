@@ -1,5 +1,5 @@
 import './polygon';
-import { requestNotificationPermission } from './controls/lib/notification/notification';
+import { requestNotificationPermission } from './lib/core/notification/notification';
 
 const AUDIO_URL = 'https://cdn.creazilla.com/sounds/15511112/mozart-concerto-no-18-in-g-flat-i-allegro-vivace-sound.mp3';
 const AUDIO_METADATA: MediaMetadataInit = {

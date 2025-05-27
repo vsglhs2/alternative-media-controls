@@ -1,6 +1,6 @@
-import { VolumeHandler } from "./controls/handler";
-import { alternativeMediaSession, CallbackHandler, GroupHandler, InputHandler, LinearHandlerSequence, MediaSessionHandler, PassActionHandler, requestNotificationPermission, type EventKey, type State } from "./controls/lib";
-import { globalVolume } from "./controls/override/audio";
+
+import { alternativeMediaSession, CallbackHandler, GroupHandler, InputHandler, LinearHandlerSequence, MediaSessionHandler, PassActionHandler, requestNotificationPermission, type EventKey, type State } from "./lib/core";
+import { globalVolume, VolumeHandler } from "./lib/extra/audio";
 
 function startSession() {
     console.log('Starting session');

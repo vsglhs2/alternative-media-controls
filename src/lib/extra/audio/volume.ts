@@ -1,5 +1,5 @@
-import { Handler } from "../lib/handler";
-import { globalVolume } from "../override/audio";
+import { Handler } from "../../core/handler";
+import { globalVolume } from "./audio";
 
 export class VolumeHandler extends Handler {
     protected delta: number;
