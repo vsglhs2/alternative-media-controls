@@ -19,7 +19,7 @@ export type EventKey =
 
 type ExtendedEventKey = EventKey | 'none';
 
-// THINK: is it okay to use WithGlobalContext here?
+// TODO (THINK): is it okay to use WithGlobalContext here?
 
 export class AlternativeMediaSession extends WithGlobalContext {
     private initialized: boolean;

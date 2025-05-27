@@ -9,7 +9,7 @@ export type GlobalContext = Context<
     & MediaSessionPrototypeInput
 >;
 
-// THINK: maybe redesign initialization logic?
+// TODO (THINK): maybe redesign initialization logic?
 // like not new LinearSequence(...), but 'linear': ...handlers
 
 export abstract class WithGlobalContext {

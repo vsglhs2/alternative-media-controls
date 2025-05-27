@@ -29,7 +29,7 @@ export function initializeContext() {
     // TODO: ensure, that this will be called after all other cleanups
     // TODO: move to corresponding context creation places
     context.on('release', () => {
-        // THINK: can this be done more nicely?
+        // TODO (THINK): can this be done more nicely?
         // aim is to not to trigger state and other events
         withIgnore(() => {
             context.actionHandleCallbackMap = {};

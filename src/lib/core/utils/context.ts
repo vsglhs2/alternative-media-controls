@@ -4,7 +4,7 @@ import { GlobalValue, type CleanupCallback } from "./global-value";
 const globalValueRecordSymbol = Symbol('Global value record');
 const cleanupsSymbol = Symbol('Cleanups');
 
-// THINK: can this abstraction be simplified?
+// TODO (THINK): can this abstraction be simplified?
 
 export type Context<
     Input extends Record<string, unknown> = {}
@@ -150,7 +150,7 @@ export function mergeContexts<
             context[globalValueRecordSymbol]
         );
 
-        // THINK: This can be problematic as such way cleanup
+        // TODO (THINK): This can be problematic as such way cleanup
         // callbacks will be called multiple times
         // But as for now it's okay, as i only clear
         // EventTarget listeners
