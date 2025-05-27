@@ -8,7 +8,7 @@ import { mergeContexts } from "../utils";
 export function initializeContext() {
     const initialContext = createInitialContext();
     const sessionContext = overrideMediaSession();
-    
+
     const context: GlobalContext = mergeContexts(
         initialContext,
         sessionContext
@@ -16,6 +16,15 @@ export function initializeContext() {
 
     setupSessionIntercept(context);
     setupGlobalContext(context);
+
+    // TODO: ensure, that this will be called after all other cleanups
+    context.on('release', () => {
+        context.actionHandleCallbackMap = {};
+        context.actionSequence = [];
+        context.globalMetadata = null;
+        context.interceptedActions = [];
+        context.sequenceStack.reset();
+    });
 
     return context;
 }

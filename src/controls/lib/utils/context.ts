@@ -83,6 +83,9 @@ const contextPrototype = {
         for (const cleanup of this[cleanupsSymbol]) {
             cleanup();
         }
+
+        this[cleanupsSymbol].clear();
+        this[globalValueRecordSymbol] = {};
     }
 };
 

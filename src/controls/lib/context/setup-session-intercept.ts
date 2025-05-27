@@ -1,20 +1,10 @@
-
-import type { ActionSequence } from "../action";
-import type { Config } from "../config";
-import type { HandlerSequence } from "../sequence";
-import { debounce, Stack } from "../utils";
+import { debounce } from "../utils";
 import type { Context } from "../utils/context";
+import type { InitialContextInput } from "./create-initial-context";
 import type { MediaSessionInput } from "./override-media-session";
 
-type Input = {
-    notificationId: string;
-    sequenceStack: Stack<HandlerSequence>;
-    config: Config;
-    actionSequence: ActionSequence;
-};
-
 export function setupSessionIntercept(
-    context: Context<Input & MediaSessionInput>
+    context: Context<InitialContextInput & MediaSessionInput>
 ) {
     const handleSequence = debounce((details: MediaSessionActionDetails) => {
         const sequence = context.sequenceStack.head();
@@ -24,10 +14,10 @@ export function setupSessionIntercept(
 
         sequence.handle(details, context.actionSequence);
         context.actionSequence.length = 0;
-    }, context.config.delay);
+    }, context.handleDelay);
 
-    context.on('config', (config) => {
-        handleSequence.delay = config.delay;
+    context.on('handleDelay', (delay) => {
+        handleSequence.delay = delay;
     });
 
     let time = 0;

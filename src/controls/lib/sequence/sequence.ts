@@ -15,6 +15,8 @@ export abstract class HandlerSequence extends Handle {
             handler.handle(current, sequence);
         }
 
+        // TODO: move to more appropriate place
+
         // const state = new State();
 
         // const body = state.getNotificationBody();

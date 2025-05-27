@@ -20,4 +20,12 @@ export class Stack<T> {
     head(): T | undefined {
         return this.stack[this.stack.length - 1];
     }
+
+    tail(): T | undefined {
+        return this.stack[0];
+    }
+
+    reset() {
+        this.stack.length = 0;
+    }
 }
