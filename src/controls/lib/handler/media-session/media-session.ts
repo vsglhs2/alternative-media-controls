@@ -1,3 +1,4 @@
+import { isInterceptHandler } from "../../context/setup-session-intercept";
 import { Handler } from "../handler";
 
 export class MediaSessionHandler extends Handler {
@@ -15,7 +16,14 @@ export class MediaSessionHandler extends Handler {
         // @ts-ignore
         sequence: ActionSequenceItem[]
     ): void {
-        const handler = this.context.actionHandleCallbackMap[this.action];
+        let handler = this.context.actionHandleCallbackMap[this.action];
+        if (!handler) {
+            const candidate = this.context.sessionCallbackMap[this.action];
+
+            if (candidate && !isInterceptHandler(candidate)) {
+                handler = candidate;
+            }
+        }
 
         handler?.({ action: this.action });
     }

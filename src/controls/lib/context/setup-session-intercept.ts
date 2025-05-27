@@ -1,10 +1,15 @@
-import { debounce } from "../utils";
-import type { Context } from "../utils/context";
-import type { InitialContextInput } from "./create-initial-context";
-import type { MediaSessionInput } from "./override-media-session";
+import { debounce, defineProperty } from "../utils";
+import type { StoredMediaSessionActionHandler } from "./override-media-session";
+import type { GlobalContext } from "./with-context";
+
+export const interceptHandlerSymbol = Symbol('Intercept handler');
+
+export function isInterceptHandler(handler: StoredMediaSessionActionHandler) {
+    return interceptHandlerSymbol in handler;
+}
 
 export function setupSessionIntercept(
-    context: Context<InitialContextInput & MediaSessionInput>
+    context: GlobalContext
 ) {
     const handleSequence = debounce((details: MediaSessionActionDetails) => {
         const sequence = context.sequenceStack.head();
@@ -40,14 +45,26 @@ export function setupSessionIntercept(
         context.session.playbackState = playbackState;
     };
 
+    defineProperty(interceptHandler, interceptHandlerSymbol, {
+        value: true,
+    });
+
     context.on(
         'interceptedActions',
         (current, previous) => {
             for (const action of previous) {
-                context.session.setActionHandler(action, null);
+                const callback = context.actionHandleCallbackMap[action];
+                delete context.actionHandleCallbackMap[action];
+
+                context.session.setActionHandler(action, callback ?? null);
             }
 
             for (const action of current) {
+                const callback = context.sessionCallbackMap[action];
+                if (callback) {
+                    context.actionHandleCallbackMap[action] = callback;
+                }
+                
                 context.session.setActionHandler(action, interceptHandler);
             }
         },
@@ -55,15 +72,10 @@ export function setupSessionIntercept(
 
     context.on('release', () => {
         for (const action of context.interceptedActions) {
-            context.session.setActionHandler(action, null);
-        }
-
-        const entries = Object.entries(context.actionHandleCallbackMap);
-        for (const [action, callback] of entries) {
-            context.session.setActionHandler(
-                action as MediaSessionAction,
-                callback
-            );
+            const callback = context.actionHandleCallbackMap[action];
+            delete context.actionHandleCallbackMap[action];
+            
+            context.session.setActionHandler(action, callback ?? null);
         }
     });
 }

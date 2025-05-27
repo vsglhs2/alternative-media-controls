@@ -1,15 +1,18 @@
 import { setupSessionIntercept } from "./setup-session-intercept";
 import { setupGlobalContext } from "./setup-global";
 import type { GlobalContext } from "./with-context";
-import { overrideMediaSession } from "./override-media-session";
+import { overrideMediaSession, overrideMediaSessionPrototype } from "./override-media-session";
 import { createInitialContext } from "./create-initial-context";
 import { mergeContexts } from "../utils";
+
+const prototypeContext = overrideMediaSessionPrototype();
 
 export function initializeContext() {
     const initialContext = createInitialContext();
     const sessionContext = overrideMediaSession();
 
     const context: GlobalContext = mergeContexts(
+        prototypeContext,
         initialContext,
         sessionContext
     );
@@ -18,6 +21,7 @@ export function initializeContext() {
     setupGlobalContext(context);
 
     // TODO: ensure, that this will be called after all other cleanups
+    // TODO: move to corresponding context creation places
     context.on('release', () => {
         context.actionHandleCallbackMap = {};
         context.actionSequence = [];

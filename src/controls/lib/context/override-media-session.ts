@@ -1,4 +1,5 @@
 import { createContext, defineProperty } from "../utils";
+import type { interceptHandlerSymbol } from "./setup-session-intercept";
 
 type ActionHandleCallbackMap = Partial<
     Record<MediaSessionAction, MediaSessionActionHandler>
@@ -102,6 +103,38 @@ export function overrideMediaSession() {
             value: MediaSession,
         });
     });
+
+    return context;
+}
+
+export type StoredMediaSessionActionHandler =
+    | MediaSessionActionHandler
+    | MediaSessionActionHandler & {
+        [interceptHandlerSymbol]?: true;
+    };
+
+type SessionCallbackMap = Partial<
+    Record<MediaSessionAction, StoredMediaSessionActionHandler>
+>;
+
+export type MediaSessionPrototypeInput = {
+    sessionCallbackMap: SessionCallbackMap;
+};
+
+export function overrideMediaSessionPrototype() {
+    const originalHandler = MediaSession.prototype.setActionHandler;
+
+    const context = createContext<MediaSessionPrototypeInput>({
+        sessionCallbackMap: {},
+    });
+
+    MediaSession.prototype.setActionHandler = function (action, handler) {
+        originalHandler.call(this, action, handler);
+
+        if (handler) {
+           context.sessionCallbackMap[action] = handler; 
+        }
+    }
 
     return context;
 }

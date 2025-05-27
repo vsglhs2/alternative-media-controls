@@ -12,16 +12,16 @@ import { LinearHandlerSequence, type HandlerSequence } from "./sequence";
 // is it okay to use WithGlobalContext here?
 
 export class AlternativeMediaSession extends WithGlobalContext {
-    #initialized: boolean;
+    private initialized: boolean;
 
-    public get initialized() {
-        return this.#initialized;
+    public get started() {
+        return this.initialized;
     }
 
     constructor() {
         super();
 
-        this.#initialized = false;
+        this.initialized = false;
     }
 
     public get interceptActions(): readonly MediaSessionAction[] {
@@ -54,24 +54,23 @@ export class AlternativeMediaSession extends WithGlobalContext {
         this.context.sequenceStack.push(sequence);
     }
 
-    public initialize() {
-        if (this.#initialized) {
+    public start() {
+        if (this.initialized) {
             throw new Error('Context already created');
         }
-        this.#initialized = true;
 
         initializeContext();
-        
         this.interceptActions = [];
 
-        const sequence = new LinearHandlerSequence([
-            new PassActionHandler(),
-        ]);
+        const handler = new PassActionHandler();
+        const sequence = new LinearHandlerSequence([handler]);
         this.handlerSequence = sequence;
+
+        this.initialized = true;
     }
 
-    public release() {
-        this.#initialized = false;
+    public stop() {
+        this.initialized = false;
 
         this.context.release();
     }
